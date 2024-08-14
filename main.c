@@ -8,8 +8,6 @@ int main() {
     if (N <= 0) {
         fprintf(stderr, "Error: The value of N must be greater than 0.\n");
         return 1;
-    } else {
-        printf("N is defined and greater than 0.\n");
     }
 
     int f[N];  // Array of size N
@@ -17,26 +15,15 @@ int main() {
     for (int i = 0; i < N; i++) {
         f[i] = i + 1;
     }
-    printf("Array f initialized successfully.\n");
 
-    int* f_hat = NTT(f, N);
+    int* f_hat = inv_NTT(NTT(f, N), N);
 
-    if (f_hat == NULL) {
-        fprintf(stderr, "Error: NTT could not be calculated.\n");
-        return 1;
-    } else {
-        printf("NTT calculated successfully.\n");
-    }
-
-    printf("NTT result:\n");
     for (int i = 0; i < N; i++) {
-        printf("%d ", f_hat[i]);
+        printf("%d ", f_hat[i]==f[i]);
     }
     printf("\n");
 
     // Frees the allocated memory
     free(f_hat);
-    printf("Memory freed successfully.\n");
-
     return 0;
 }

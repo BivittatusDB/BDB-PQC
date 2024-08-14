@@ -23,22 +23,17 @@ int* NTT(int* f, size_t size) {
     if (f == NULL) {
         fprintf(stderr, "Error: Input array is NULL.\n");
         return NULL;
-    } else {
-        printf("Input array is not NULL.\n");
     }
 
     int* f_hat = (int*)malloc(size * sizeof(int));
     if (f_hat == NULL) {
         fprintf(stderr, "Error: Memory allocation failed.\n");
         return NULL;
-    } else {
-        printf("Memory allocation successful.\n");
     }
 
     for (size_t i = 0; i < size; i++) {
         f_hat[i] = f[i];  // Copy input to output
     }
-    printf("Array f copied to f_hat successfully.\n");
 
     int i = 1;
     for (int len = 128; len >= 2; len /= 2) {
@@ -48,8 +43,6 @@ int* NTT(int* f, size_t size) {
                 fprintf(stderr, "Error: Exponent calculation error at index %d.\n", i-1);
                 free(f_hat);
                 return NULL;
-            } else {
-                printf("Exponent calculation successful at index %d.\n", i-1);
             }
             for (int j = start; j < start + len; j++) {
                 int t = (ntt_zeta * f_hat[j + len]) % Q;
@@ -58,8 +51,29 @@ int* NTT(int* f, size_t size) {
             }
         }
     }
-    printf("NTT transformation completed successfully.\n");
     return f_hat;
+}
+
+int* inv_NTT(int* f_hat, size_t size){
+    int* f = (int*)malloc(size * sizeof(int));
+    for (size_t i = 0; i < size; i++) {
+        f[i] = f_hat[i];  // Copy input to output
+    }
+    int i=127;
+    for (int len=2; len<=128; len*=2){
+        for (int start = 0; start < 256; start+=2*len){
+            int ntt_zeta = mod_exp(Z, BitRev7(i--), Q);
+            for (int j = start; j<start+len; j++){
+                int t=f[j];
+                f[j] = ((t+f[j+len])%Q +Q)%Q;
+                f[j+len] = ((ntt_zeta * (f[j+len]-t)%Q)+Q)%Q;
+            }
+        }
+    }
+    for (size_t i = 0; i < size; i++) {
+        f[i] = (f[i]*3303)%Q;  // Copy input to output
+    }
+    return f;
 }
 
 #endif // __NTT_H__
