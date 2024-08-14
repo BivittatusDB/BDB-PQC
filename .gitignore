@@ -1,3 +1,7 @@
+#personal test files
+.vscode/
+misc*
+
 # Prerequisites
 *.d
 
