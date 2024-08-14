@@ -1,10 +1,10 @@
 #ifndef __CONSTANTS_H__
 #define __CONSTANTS_H__
 
-#define n 256
-#define q 3329
+#define N 256
+#define Q 3329
 #define zeta 17
-#define z zeta
+#define Z zeta
 
 int BitRev7(int r){
     unsigned int res = 0;
