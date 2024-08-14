@@ -1,8 +1,6 @@
 #ifndef __CONSTANTS_H__
 #define __CONSTANTS_H__
 
-#include <stdio.h>
-
 #define N 256
 #define Q 3329
 #define zeta 17
@@ -21,24 +19,14 @@
     #error "Error: The value of zeta must be greater than 0."
 #endif
 
-int BitRev7(int r) {
-    if (r < 0) {
-        fprintf(stderr, "Error: Input to BitRev7 must be non-negative.\n");
-        return -1;  // Indicates an error
-    }
-
-    unsigned int res = 0;
-    for (int i = 0; i < 7; i++) {
-        res <<= 1;
-        res |= (r & 1);
-        r >>= 1;
-    }
-    return res;
-}
+typedef struct{
+    int a; 
+    int b;
+} binomial; //for a binomial ax+b
 
 typedef struct{
-    int a;
-    int b;
-} binomial;
+    int* ek; //encapsulation key
+    int* dk; //decapsulation key
+} KeyPair;
 
 #endif // __CONSTANTS_H__

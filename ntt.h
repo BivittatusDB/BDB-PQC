@@ -2,6 +2,7 @@
 #define __NTT_H__
 
 #include "constants.h"
+#include "BinOp.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -99,5 +100,8 @@ int* MultiplyNTTs(int* f_hat, int* g_hat, size_t size){
     }
     return h_hat;
 }
+
+// NIST FIPS 203; Algoritm 7
+int* SampleNTT(int* B);
 
 #endif // __NTT_H__

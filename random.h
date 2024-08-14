@@ -63,3 +63,9 @@ int* randarray(int size, int max){
     }
     return array;
 }
+
+// RBG Should replace the functions above. NIST FIPS 203: Section 3.3 (Randomness Generation)
+
+// NIST FIPS 203; Algoritm 8
+int* SamplePolyCBD(int* B, int eta);
+
