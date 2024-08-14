@@ -2,6 +2,7 @@
 #define __KEM512_H__
 
 #include "constants.h"
+#include "random.h"
 
 //NIST Constants for KEM-512 (FIPS 203 Table 2)
 int k  = 2;

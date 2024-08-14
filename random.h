@@ -66,6 +66,20 @@ int* randarray(int size, int max){
 
 // RBG Should replace the functions above. NIST FIPS 203: Section 3.3 (Randomness Generation)
 
-// NIST FIPS 203; Algoritm 8
-int* SamplePolyCBD(int* B, int eta);
+#include "BinOp.h"
+#include "constants.h"
 
+// NIST FIPS 203; Algoritm 8
+int* SamplePolyCBD(int* B, int eta, int n){
+    int* f= (int*)malloc(256*sizeof(int));
+    int* b = BytesToBits(B);
+    for (int i = 0; i<256; i++){
+        int x=0, y=0;
+        for (int j = 0; j<n; j++){
+            x+=b[2*i*eta + j];
+            y+=b[2*i*eta + eta + j];
+            f[i]=((x-y)%Q + Q)%Q;
+        }
+    }
+    return f;
+}
