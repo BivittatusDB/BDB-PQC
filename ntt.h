@@ -19,6 +19,7 @@ int mod_exp(int base, int exp, int mod) {
     return result;
 }
 
+// NIST FIPS 203; Algoritm 9
 int* NTT(int* f, size_t size) {
     if (f == NULL) {
         fprintf(stderr, "Error: Input array is NULL.\n");
@@ -54,6 +55,7 @@ int* NTT(int* f, size_t size) {
     return f_hat;
 }
 
+// NIST FIPS 203; Algoritm 10
 int* inv_NTT(int* f_hat, size_t size){
     int* f = (int*)malloc(size * sizeof(int));
     for (size_t i = 0; i < size; i++) {
@@ -74,6 +76,28 @@ int* inv_NTT(int* f_hat, size_t size){
         f[i] = (f[i]*3303)%Q;  // Copy input to output
     }
     return f;
+}
+
+// NIST FIPS 203; Algoritm 12
+binomial BaseCaseMultiply(binomial a, binomial b, int gamma){
+    binomial c;
+    c.a = a.a*b.a + a.b*b.b*gamma;
+    c.b = a.a*b.b + a.b*b.a;
+    return b;
+}
+
+// NIST FIPS 203; Algoritm 11
+int* MultiplyNTTs(int* f_hat, int* g_hat, size_t size){
+    int* h_hat = (int*)malloc(size*sizeof(int));
+    for (int i = 0; i<128; i++){
+        binomial a, b;
+        a.a, a.b = f_hat[2*i], f_hat[2*i + 1];
+        b.a, b.b = g_hat[2*i], g_hat[2*i + 1];
+        int gamma= mod_exp(Z, 2*BitRev7(i)+1, Q);
+        binomial c = BaseCaseMultiply(a,b,gamma);
+        h_hat[2*i], h_hat[2*i + 1] = c.a, c.b;
+    }
+    return h_hat;
 }
 
 #endif // __NTT_H__

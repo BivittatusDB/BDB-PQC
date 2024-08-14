@@ -36,4 +36,9 @@ int BitRev7(int r) {
     return res;
 }
 
+typedef struct{
+    int a;
+    int b;
+} binomial;
+
 #endif // __CONSTANTS_H__
