@@ -8,7 +8,7 @@
 #define zeta 17
 #define Z zeta
 
-// Verifica que los valores definidos sean válidos
+// Verifies that the defined values are valid
 #if N <= 0
     #error "Error: The value of N must be greater than 0."
 #endif
@@ -24,7 +24,7 @@
 int BitRev7(int r) {
     if (r < 0) {
         fprintf(stderr, "Error: Input to BitRev7 must be non-negative.\n");
-        return -1;  // Indica un error
+        return -1;  // Indicates an error
     }
 
     unsigned int res = 0;
