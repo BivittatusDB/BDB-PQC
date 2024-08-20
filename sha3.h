@@ -2,7 +2,7 @@
 #define __SHA3_H__
 
 #include <stdint.h>
-#include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
