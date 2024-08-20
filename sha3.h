@@ -6,7 +6,6 @@
 #include <string.h>
 #include <stdio.h>
 
-
 #define KECCAK_ROUNDS 24
 #define KECCAK_STATE_SIZE 25
 #define SHA3_256_DIGEST_SIZE 32
@@ -33,10 +32,12 @@ static const int keccak_rotation_offsets[5][5] = {
     {18,  2, 61, 56, 14}
 };
 
+// Function to rotate bits to the left
 static inline uint64_t rotate_left(uint64_t x, unsigned int n) {
     return (x << n) | (x >> (64 - n));
 }
 
+// Keccak Permutation
 static void keccak_permutation(uint64_t state[KECCAK_STATE_SIZE]) {
     for (unsigned int round = 0; round < KECCAK_ROUNDS; ++round) {
         uint64_t c[5], d[5], b[5][5];
@@ -73,6 +74,7 @@ static void keccak_permutation(uint64_t state[KECCAK_STATE_SIZE]) {
     }
 }
 
+// Keccak absorption
 static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data, size_t rate, size_t data_len) {
     size_t block_size = rate / 8;
     while (data_len >= block_size) {
@@ -84,7 +86,12 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
         data_len -= block_size;
     }
 
-    uint8_t last_block[block_size];
+    uint8_t *last_block = (uint8_t *)malloc(block_size);
+    if (last_block == NULL) {
+        fprintf(stderr, "Error: No se pudo asignar memoria para last_block.\n");
+        return;
+    }
+
     memset(last_block, 0, block_size);
     memcpy(last_block, data, data_len);
     last_block[data_len] = 0x06;  // Padding
@@ -93,8 +100,11 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
         state[i] ^= ((uint64_t *)last_block)[i];
     }
     keccak_permutation(state);  // Apply permutation after padding
+
+    free(last_block);  // Free memory
 }
 
+// Exprimir Keccak
 static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, size_t rate, size_t output_len) {
     size_t block_size = rate / 8;
     while (output_len >= block_size) {
@@ -106,32 +116,35 @@ static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, s
     memcpy(output, state, output_len);
 }
 
+// SHA3-256
 void sha3_256(const uint8_t *data, size_t data_len, uint8_t *hash) {
     uint64_t state[KECCAK_STATE_SIZE] = {0};
     keccak_absorb(state, data, 1088, data_len);
     keccak_squeeze(state, hash, 1088, SHA3_256_DIGEST_SIZE);
 }
 
+// SHA3-512
 void sha3_512(const uint8_t *data, size_t data_len, uint8_t *hash) {
     uint64_t state[KECCAK_STATE_SIZE] = {0};
     keccak_absorb(state, data, 576, data_len);
     keccak_squeeze(state, hash, 576, SHA3_512_DIGEST_SIZE);
 }
 
+// SHAKE128
 void shake128(const uint8_t *data, size_t data_len, uint8_t *output, size_t output_len) {
     uint64_t state[KECCAK_STATE_SIZE] = {0};
     keccak_absorb(state, data, SHAKE128_RATE * 8, data_len);
     keccak_squeeze(state, output, SHAKE128_RATE * 8, output_len);
 }
 
+// SHAKE256
 void shake256(const uint8_t *data, size_t data_len, uint8_t *output, size_t output_len) {
     uint64_t state[KECCAK_STATE_SIZE] = {0};
     keccak_absorb(state, data, SHAKE256_RATE * 8, data_len);
     keccak_squeeze(state, output, SHAKE256_RATE * 8, output_len);
 }
 
-
-// Helper function to print a hash or output
+// Auxiliary function to print a hash or hexadecimal output
 void print_hex(const uint8_t* data, size_t len) {
     for (size_t i = 0; i < len; i++) {
         printf("%02x", data[i]);
