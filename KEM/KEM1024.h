@@ -3,37 +3,42 @@
 
 #include "constants.h"
 
-//NIST Constants for KEM-1024 (FIPS 203 Table 2)
-int k  = 4;
-int n1 = 2;
-int n2 = 2;
-int du = 11;
-int dv = 5;
+// NIST Constants for KEM-1024 (FIPS 203 Table 2)
+const int k  = 4;
+const int n1 = 2;
+const int n2 = 2;
+const int du = 11;
+const int dv = 5;
 
-int RBG_strength = 256;
+const int RBG_strength = 256;
 
 // ENCRYPTION: USED FOR ENCRYPTION AND DECRYPTION (FIPS 203; Section 5)
-// NIST FIPS 203; Algoritm 13
-KeyPair KeyGen(int* d);
-// NIST FIPS 203; Algoritm 14
-int* Encrypt(int* ek, int* m, int* r);
-// NIST FIPS 203; Algoritm 15
-int* Decrypt(int* dk, int* c);
+// NIST FIPS 203; Algorithm 13
+typedef struct {
+    int* publicKey;
+    int* privateKey;
+} KeyPair;
+
+KeyPair KeyGen(const int* d);
+// NIST FIPS 203; Algorithm 14
+int* Encrypt(const int* ek, const int* m, const int* r);
+// NIST FIPS 203; Algorithm 15
+int* Decrypt(const int* dk, const int* c);
 
 // INTERNALS: USED FOR TESTING (FIPS 203; Section 6)
-// NIST FIPS 203; Algoritm 16
-KeyPair KeyGen_internal(int* d, int* z);
-// NIST FIPS 203; Algoritm 17
-int* Encaps_internal(int* ek, int* m);
-// NIST FIPS 203; Algoritm 18
-int* Decaps_internal(int* dk, int* c);
+// NIST FIPS 203; Algorithm 16
+KeyPair KeyGen_internal(const int* d, const int* z);
+// NIST FIPS 203; Algorithm 17
+int* Encaps_internal(const int* ek, const int* m);
+// NIST FIPS 203; Algorithm 18
+int* Decaps_internal(const int* dk, const int* c);
 
 // ML-KEM: USED FOR RANDOMNESS AND TESTING (FIPS 203; Section 7)
-// NIST FIPS 203; Algoritm 19
+// NIST FIPS 203; Algorithm 19
 KeyPair ML_KeyGen();
-// NIST FIPS 203; Algoritm 20
-int* Encapsulation(int* ek);
-// NIST FIPS 203; Algoritm 21
-int* Decapsulation(int* dk, int* c);
+// NIST FIPS 203; Algorithm 20
+int* Encapsulation(const int* ek);
+// NIST FIPS 203; Algorithm 21
+int* Decapsulation(const int* dk, const int* c);
 
-#endif //__KEM1024_H__
+#endif // __KEM1024_H__
