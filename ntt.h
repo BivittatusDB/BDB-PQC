@@ -3,6 +3,7 @@
 
 #include "constants.h"
 #include "BinOp.h"
+#include "sha3.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -102,6 +103,26 @@ int* MultiplyNTTs(int* f_hat, int* g_hat, size_t size){
 }
 
 // NIST FIPS 203; Algoritm 7
-int* SampleNTT(int* B);
+int* SampleNTT(int* B){
+    // XOF.int()
+    uint64_t ctx[KECCAK_STATE_SIZE] = {0};
+    // XOF.Absorb(ctx, B)
+    keccak_absorb(ctx, (uint8_t*)B, SHAKE128_RATE * 8, 34);
+    int j=0;
+    uint8_t* C = (uint8_t*)malloc(3*sizeof(uint8_t));
+    int* a_hat = (int*)malloc(256*sizeof(int));
+    do{
+        keccak_squeeze(ctx,C,SHAKE128_RATE,3);
+        int d1 = ((int)C[0])+256 * ((int)C[1]%16);
+        int d2 = ((int)((int)C[1])/16) + 16*(int)C[2];
+        if (d1<Q){
+            a_hat[j++]=d1;
+        }
+        if (d2 < Q & j<256){
+            a_hat[j++] = d2;
+        }
+    } while (j<256);
+    return a_hat;    
+}
 
 #endif // __NTT_H__
