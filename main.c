@@ -3,7 +3,7 @@
 int main() {
     // Test data
     const char* test_data = "Hello, SHA-3!";
-    size_t data_len = strlen(test_data);
+    size_t data_len = sizeof(test_data) - 1;
 
     // Buffers for hash outputs
     uint8_t hash_256[32];
@@ -11,7 +11,7 @@ int main() {
     uint8_t shake128_output[32];
     uint8_t shake256_output[64];
 
-    //for refrence, this should be ce4ab23ba79eba9ba2531220a647080bed52619b752df89a0a67fd5973d667f1
+    // For reference, this should be ce4ab23ba79eba9ba2531220a647080bed52619b752df89a0a67fd5973d667f1
     // Test SHA3-256
     sha3_256((const uint8_t*)test_data, data_len, hash_256);
     printf("SHA3-256: ");

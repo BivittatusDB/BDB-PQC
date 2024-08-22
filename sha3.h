@@ -24,12 +24,18 @@ static const uint64_t keccak_round_constants[KECCAK_ROUNDS] = {
     0x8000000000008080ULL, 0x0000000080000001ULL, 0x8000000080008008ULL
 };
 
-static const int keccak_rotation_offsets[5][5] = {
-    { 0,  1, 62, 28, 27},
-    {36, 44,  6, 55, 20},
-    { 3, 10, 43, 25, 39},
-    {41, 45, 15, 21,  8},
-    {18,  2, 61, 56, 14}
+static const int keccak_rotation_offsets_0[5] = { 0,  1, 62, 28, 27};
+static const int keccak_rotation_offsets_1[5] = {36, 44,  6, 55, 20};
+static const int keccak_rotation_offsets_2[5] = { 3, 10, 43, 25, 39};
+static const int keccak_rotation_offsets_3[5] = {41, 45, 15, 21,  8};
+static const int keccak_rotation_offsets_4[5] = {18,  2, 61, 56, 14};
+
+static const int* keccak_rotation_offsets[5] = {
+    keccak_rotation_offsets_0,
+    keccak_rotation_offsets_1,
+    keccak_rotation_offsets_2,
+    keccak_rotation_offsets_3,
+    keccak_rotation_offsets_4
 };
 
 // Function to rotate bits to the left
@@ -40,7 +46,9 @@ static inline uint64_t rotate_left(uint64_t x, unsigned int n) {
 // Keccak Permutation
 static void keccak_permutation(uint64_t state[KECCAK_STATE_SIZE]) {
     for (unsigned int round = 0; round < KECCAK_ROUNDS; ++round) {
-        uint64_t c[5], d[5], b[5][5];
+        uint64_t c[5];
+        uint64_t d[5];
+        uint64_t b[5][5];
 
         // Theta step
         for (unsigned int i = 0; i < 5; ++i) {
@@ -79,7 +87,7 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
     size_t block_size = rate / 8;
     while (data_len >= block_size) {
         for (size_t i = 0; i < block_size / 8; ++i) {
-            state[i] ^= ((uint64_t *)data)[i];
+            state[i] ^= ((const uint64_t *)data)[i];
         }
         keccak_permutation(state);
         data += block_size;
@@ -93,7 +101,7 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
     }
 
     memset(last_block, 0, block_size);
-    memcpy(last_block, data, data_len);
+    memcpy(last_block, data, data_len < block_size ? data_len : block_size); // Ensure no overflow
     last_block[data_len] = 0x06;  // Padding
     last_block[block_size - 1] |= 0x80;  // Multi-rate padding
     for (size_t i = 0; i < block_size / 8; ++i) {
@@ -104,16 +112,22 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
     free(last_block);  // Free memory
 }
 
-// Exprimir Keccak
+// Squeeze Keccak
 static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, size_t rate, size_t output_len) {
     size_t block_size = rate / 8;
     while (output_len >= block_size) {
-        memcpy(output, state, block_size);
+        for (size_t i = 0; i < block_size; ++i) {
+            output[i] = ((uint8_t *)state)[i];
+        }
         keccak_permutation(state);
         output += block_size;
         output_len -= block_size;
     }
-    memcpy(output, state, output_len);
+    if (output_len > 0) {
+        for (size_t i = 0; i < output_len; ++i) {
+            output[i] = ((uint8_t *)state)[i];
+        }
+    }
 }
 
 // SHA3-256
