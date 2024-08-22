@@ -114,12 +114,12 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
 static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, size_t rate, size_t output_len) {
     size_t block_size = rate / 8;
     while (output_len >= block_size) {
-        memcpy(output, state, block_size);  // Línea 116 corregida
+        memcpy(output, state, output_len < block_size ? output_len : block_size);  // Línea 122 corregida
         keccak_permutation(state);
         output += block_size;
         output_len -= block_size;
     }
-    memcpy(output, state, output_len < block_size ? output_len : block_size);
+    memcpy(output, state, output_len);
 }
 
 // SHA3-256
