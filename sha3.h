@@ -101,7 +101,7 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
     }
 
     memset(last_block, 0, block_size);
-    memcpy(last_block, data, data_len);
+    memcpy(last_block, data, data_len < block_size ? data_len : block_size); // Ensure no overflow
     last_block[data_len] = 0x06;  // Padding
     last_block[block_size - 1] |= 0x80;  // Multi-rate padding
     for (size_t i = 0; i < block_size / 8; ++i) {
@@ -116,13 +116,17 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
 static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, size_t rate, size_t output_len) {
     size_t block_size = rate / 8;
     while (output_len >= block_size) {
-        memcpy(output, state, block_size);
+        for (size_t i = 0; i < block_size; ++i) {
+            output[i] = ((uint8_t *)state)[i];
+        }
         keccak_permutation(state);
         output += block_size;
         output_len -= block_size;
     }
     if (output_len > 0) {
-        memcpy(output, state, output_len);
+        for (size_t i = 0; i < output_len; ++i) {
+            output[i] = ((uint8_t *)state)[i];
+        }
     }
 }
 
