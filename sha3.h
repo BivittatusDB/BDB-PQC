@@ -46,7 +46,9 @@ static inline uint64_t rotate_left(uint64_t x, unsigned int n) {
 // Keccak Permutation
 static void keccak_permutation(uint64_t state[KECCAK_STATE_SIZE]) {
     for (unsigned int round = 0; round < KECCAK_ROUNDS; ++round) {
-        uint64_t c[5], d[5], b[5][5];
+        uint64_t c[5];
+        uint64_t d[5];
+        uint64_t b[5][5];
 
         // Theta step
         for (unsigned int i = 0; i < 5; ++i) {
@@ -85,7 +87,7 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
     size_t block_size = rate / 8;
     while (data_len >= block_size) {
         for (size_t i = 0; i < block_size / 8; ++i) {
-            state[i] ^= ((const uint64_t *)data)[i];  // Línea 82 corregida
+            state[i] ^= ((const uint64_t *)data)[i];
         }
         keccak_permutation(state);
         data += block_size;
@@ -114,12 +116,14 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
 static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, size_t rate, size_t output_len) {
     size_t block_size = rate / 8;
     while (output_len >= block_size) {
-        memcpy(output, state, output_len < block_size ? output_len : block_size);  // Línea 122 corregida
+        memcpy(output, state, block_size);
         keccak_permutation(state);
         output += block_size;
         output_len -= block_size;
     }
-    memcpy(output, state, output_len);
+    if (output_len > 0) {
+        memcpy(output, state, output_len);
+    }
 }
 
 // SHA3-256
