@@ -24,12 +24,18 @@ static const uint64_t keccak_round_constants[KECCAK_ROUNDS] = {
     0x8000000000008080ULL, 0x0000000080000001ULL, 0x8000000080008008ULL
 };
 
-static const int keccak_rotation_offsets[5][5] = {
-    { 0,  1, 62, 28, 27},
-    {36, 44,  6, 55, 20},
-    { 3, 10, 43, 25, 39},
-    {41, 45, 15, 21,  8},
-    {18,  2, 61, 56, 14}
+static const int keccak_rotation_offsets_0[5] = { 0,  1, 62, 28, 27};
+static const int keccak_rotation_offsets_1[5] = {36, 44,  6, 55, 20};
+static const int keccak_rotation_offsets_2[5] = { 3, 10, 43, 25, 39};
+static const int keccak_rotation_offsets_3[5] = {41, 45, 15, 21,  8};
+static const int keccak_rotation_offsets_4[5] = {18,  2, 61, 56, 14};
+
+static const int* keccak_rotation_offsets[5] = {
+    keccak_rotation_offsets_0,
+    keccak_rotation_offsets_1,
+    keccak_rotation_offsets_2,
+    keccak_rotation_offsets_3,
+    keccak_rotation_offsets_4
 };
 
 // Function to rotate bits to the left
