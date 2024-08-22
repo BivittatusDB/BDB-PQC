@@ -79,7 +79,7 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
     size_t block_size = rate / 8;
     while (data_len >= block_size) {
         for (size_t i = 0; i < block_size / 8; ++i) {
-            state[i] ^= ((uint64_t *)data)[i];
+            state[i] ^= ((const uint64_t *)data)[i];  // Línea 82 corregida
         }
         keccak_permutation(state);
         data += block_size;
@@ -104,11 +104,11 @@ static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data
     free(last_block);  // Free memory
 }
 
-// Exprimir Keccak
+// Squeeze Keccak
 static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, size_t rate, size_t output_len) {
     size_t block_size = rate / 8;
     while (output_len >= block_size) {
-        memcpy(output, state, block_size);
+        memcpy(output, state, block_size);  // Línea 116 corregida
         keccak_permutation(state);
         output += block_size;
         output_len -= block_size;
