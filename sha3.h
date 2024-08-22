@@ -119,7 +119,7 @@ static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, s
         output += block_size;
         output_len -= block_size;
     }
-    memcpy(output, state, output_len);
+    memcpy(output, state, output_len < block_size ? output_len : block_size);
 }
 
 // SHA3-256
