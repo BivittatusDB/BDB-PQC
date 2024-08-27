@@ -26,6 +26,7 @@ int* BytesToBits(uint8_t* B, int l){
             C[i]=(uint8_t)(C[i]/2);
         }
     }
+    free(C);
     return b;
 }
 
