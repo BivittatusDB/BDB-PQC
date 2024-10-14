@@ -1,155 +1,139 @@
-#ifndef __SHA3_H__
-#define __SHA3_H__
+//https://stackoverflow.com/questions/51144505/generate-sha-3-hash-in-c-using-openssl-library
+//TEST COMPILE: gcc -o sha3.exe sha3.c -lssl -lcrypto && sha3.exe
 
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <openssl/evp.h>
 
-#define KECCAK_ROUNDS 24
-#define KECCAK_STATE_SIZE 25
-#define SHA3_256_DIGEST_SIZE 32
-#define SHA3_512_DIGEST_SIZE 64
-#define SHAKE128_RATE 168
-#define SHAKE256_RATE 136
-
-static const uint64_t keccak_round_constants[KECCAK_ROUNDS] = {
-    0x0000000000000001ULL, 0x0000000000008082ULL, 0x800000000000808aULL,
-    0x8000000080008000ULL, 0x000000000000808bULL, 0x0000000080000001ULL,
-    0x8000000080008081ULL, 0x8000000000008009ULL, 0x000000000000008aULL,
-    0x0000000000000088ULL, 0x0000000080008009ULL, 0x000000008000000aULL,
-    0x000000008000808bULL, 0x800000000000008bULL, 0x8000000000008089ULL,
-    0x8000000000008003ULL, 0x8000000000008002ULL, 0x8000000000000080ULL,
-    0x000000000000800aULL, 0x800000008000000aULL, 0x8000000080008081ULL,
-    0x8000000000008080ULL, 0x0000000080000001ULL, 0x8000000080008008ULL
-};
-
-static const int keccak_rotation_offsets[5][5] = {
-    { 0,  1, 62, 28, 27},
-    {36, 44,  6, 55, 20},
-    { 3, 10, 43, 25, 39},
-    {41, 45, 15, 21,  8},
-    {18,  2, 61, 56, 14}
-};
-
-// Function to rotate bits to the left
-static inline uint64_t rotate_left(uint64_t x, unsigned int n) {
-    return (x << n) | (x >> (64 - n));
-}
-
-// Keccak Permutation
-static void keccak_permutation(uint64_t state[KECCAK_STATE_SIZE]) {
-    for (unsigned int round = 0; round < KECCAK_ROUNDS; ++round) {
-        uint64_t c[5], d[5], b[5][5];
-
-        // Theta step
-        for (unsigned int i = 0; i < 5; ++i) {
-            c[i] = state[i] ^ state[i + 5] ^ state[i + 10] ^ state[i + 15] ^ state[i + 20];
-        }
-        for (unsigned int i = 0; i < 5; ++i) {
-            d[i] = c[(i + 4) % 5] ^ rotate_left(c[(i + 1) % 5], 1);
-        }
-        for (unsigned int i = 0; i < 5; ++i) {
-            for (unsigned int j = 0; j < 5; ++j) {
-                state[i + 5 * j] ^= d[i];
-            }
-        }
-
-        // Rho and Pi steps
-        for (unsigned int i = 0; i < 5; ++i) {
-            for (unsigned int j = 0; j < 5; ++j) {
-                b[j][(2 * i + 3 * j) % 5] = rotate_left(state[i + 5 * j], keccak_rotation_offsets[i][j]);
-            }
-        }
-
-        // Chi step
-        for (unsigned int i = 0; i < 5; ++i) {
-            for (unsigned int j = 0; j < 5; ++j) {
-                state[i + 5 * j] = b[i][j] ^ (~b[(i + 1) % 5][j] & b[(i + 2) % 5][j]);
-            }
-        }
-
-        // Iota step
-        state[0] ^= keccak_round_constants[round];
-    }
-}
-
-// Keccak absorption
-static void keccak_absorb(uint64_t state[KECCAK_STATE_SIZE], const uint8_t *data, size_t rate, size_t data_len) {
-    size_t block_size = rate / 8;
-    while (data_len >= block_size) {
-        for (size_t i = 0; i < block_size / 8; ++i) {
-            state[i] ^= ((uint64_t *)data)[i];
-        }
-        keccak_permutation(state);
-        data += block_size;
-        data_len -= block_size;
+char *sha3_256(const unsigned char *input, size_t inlen) {
+    unsigned char *output = (unsigned char *)malloc(32);
+    if (output == NULL) {
+        return NULL; 
     }
 
-    uint8_t *last_block = (uint8_t *)malloc(block_size);
-    if (last_block == NULL) {
-        fprintf(stderr, "Error: No se pudo asignar memoria para last_block.\n");
-        return;
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    const EVP_MD *md = EVP_sha3_256();
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    EVP_DigestUpdate(mdctx, input, inlen);
+    EVP_DigestFinal_ex(mdctx, output, NULL);
+
+    // Free the context
+    EVP_MD_CTX_free(mdctx);
+
+    return (char *)output;
+}
+
+char *sha3_512(const unsigned char *input, size_t inlen) {
+    unsigned char *output = (unsigned char *)malloc(64);
+    if (output == NULL) {
+        return NULL; 
     }
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    const EVP_MD *md = EVP_sha3_512();
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    EVP_DigestUpdate(mdctx, input, inlen);
+    EVP_DigestFinal_ex(mdctx, output, NULL);
 
-    memset(last_block, 0, block_size);
-    memcpy(last_block, data, data_len);
-    last_block[data_len] = 0x06;  // Padding
-    last_block[block_size - 1] |= 0x80;  // Multi-rate padding
-    for (size_t i = 0; i < block_size / 8; ++i) {
-        state[i] ^= ((uint64_t *)last_block)[i];
+    // Free the context
+    EVP_MD_CTX_free(mdctx);
+    return (char *)output;
+}
+
+
+// will need to split into XOF
+char *shake128(const unsigned char *input, size_t inlen, size_t outlen) {
+    unsigned char *output = (unsigned char *)malloc(outlen);
+    if (output == NULL) {
+        return NULL; 
     }
-    keccak_permutation(state);  // Apply permutation after padding
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    const EVP_MD *md = EVP_shake128();
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    EVP_DigestUpdate(mdctx, input, inlen);
+    EVP_DigestFinalXOF(mdctx, output, outlen);
 
-    free(last_block);  // Free memory
+    // Free the context
+    EVP_MD_CTX_free(mdctx); 
+    return (char *)output;
 }
 
-// Exprimir Keccak
-static void keccak_squeeze(uint64_t state[KECCAK_STATE_SIZE], uint8_t *output, size_t rate, size_t output_len) {
-    size_t block_size = rate / 8;
-    while (output_len >= block_size) {
-        memcpy(output, state, block_size);
-        keccak_permutation(state);
-        output += block_size;
-        output_len -= block_size;
+char *shake256(const unsigned char *input, size_t inlen,size_t outlen) {
+    unsigned char *output = (unsigned char *)malloc(outlen);
+    if (output == NULL) {
+        return NULL; 
     }
-    memcpy(output, state, output_len);
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    const EVP_MD *md = EVP_shake256();
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    EVP_DigestUpdate(mdctx, input, inlen);
+    EVP_DigestFinalXOF(mdctx, output, outlen);
+
+    // Free the context
+    EVP_MD_CTX_free(mdctx); 
+    return (char *)output;
 }
 
-// SHA3-256
-void sha3_256(const uint8_t *data, size_t data_len, uint8_t *hash) {
-    uint64_t state[KECCAK_STATE_SIZE] = {0};
-    keccak_absorb(state, data, 1088, data_len);
-    keccak_squeeze(state, hash, 1088, SHA3_256_DIGEST_SIZE);
+//ALGORITHMS NEEDED:
+/*
+1. H: SHA3-256
+2. J: SHAKE256
+3. G: SHA3-512
+4: XOF: SHAKE128
+*/
+
+#define H sha3_256
+#define G sha3_512
+#define J shake256
+
+//SHAKE128 as an XOF 
+EVP_MD_CTX *XOF_init(){
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    const EVP_MD *md = EVP_shake128();
+    EVP_DigestInit_ex(mdctx, md, NULL);
+    return mdctx;
 }
 
-// SHA3-512
-void sha3_512(const uint8_t *data, size_t data_len, uint8_t *hash) {
-    uint64_t state[KECCAK_STATE_SIZE] = {0};
-    keccak_absorb(state, data, 576, data_len);
-    keccak_squeeze(state, hash, 576, SHA3_512_DIGEST_SIZE);
+void XOF_Absorb(EVP_MD_CTX *mdctx, char *input, size_t inlen){
+    EVP_DigestUpdate(mdctx, input, inlen);
 }
 
-// SHAKE128
-void shake128(const uint8_t *data, size_t data_len, uint8_t *output, size_t output_len) {
-    uint64_t state[KECCAK_STATE_SIZE] = {0};
-    keccak_absorb(state, data, SHAKE128_RATE * 8, data_len);
-    keccak_squeeze(state, output, SHAKE128_RATE * 8, output_len);
-}
+char *XOF_Squeeze(EVP_MD_CTX *mdctx, size_t outlen){
+    unsigned char *output = (unsigned char *)malloc(outlen);
+    if (output == NULL) {
+        return NULL; 
+    }
+    EVP_DigestFinalXOF(mdctx, output, outlen);
+    return (char *)output;
+} 
 
-// SHAKE256
-void shake256(const uint8_t *data, size_t data_len, uint8_t *output, size_t output_len) {
-    uint64_t state[KECCAK_STATE_SIZE] = {0};
-    keccak_absorb(state, data, SHAKE256_RATE * 8, data_len);
-    keccak_squeeze(state, output, SHAKE256_RATE * 8, output_len);
-}
+//test print for SHAKE256, SHA3-256, SHA3-512
+int print_digest() {
+    const char *message = "Hello, world!";
+    int outlen = 32; //change length here
+    char *output = shake256((const unsigned char *)message, strlen(message), outlen); //change function here
 
-// Auxiliary function to print a hash or hexadecimal output
-void print_hex(const uint8_t* data, size_t len) {
-    for (size_t i = 0; i < len; i++) {
-        printf("%02x", data[i]);
+    // Print the hash in hexadecimal format
+    for (int i = 0; i < 32; i++) {
+        printf("%02x", (unsigned char)output[i]);
     }
     printf("\n");
+
+    return 0;
 }
 
-#endif //__SHA3_H__
+int print_XOF() {
+    char *message = "Hello, world!";
+    int outlen = 32;  //change length here
+    EVP_MD_CTX *ctx = XOF_init();
+    XOF_Absorb(ctx, message, strlen(message));
+    char *output = XOF_Squeeze(ctx, outlen);
+    
+    // Print the hash in hexadecimal format
+    for (int i = 0; i < 32; i++) {
+        printf("%02x", (unsigned char)output[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
