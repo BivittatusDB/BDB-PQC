@@ -41,7 +41,7 @@ int* NTT(int* f, size_t size) {
     int i = 1;
     for (int len = 128; len >= 2; len /= 2) {
         for (int start = 0; start < N; start += 2 * len) {
-            int ntt_zeta = mod_exp(Z, BitRev7(i++), Q);
+            int ntt_zeta = mod_exp(zeta, BitRev7(i++), Q);
             if (ntt_zeta == 0) {
                 fprintf(stderr, "Error: Exponent calculation error at index %d.\n", i-1);
                 free(f_hat);
@@ -66,7 +66,7 @@ int* inv_NTT(int* f_hat, size_t size){
     int i=127;
     for (int len=2; len<=128; len*=2){
         for (int start = 0; start < 256; start+=2*len){
-            int ntt_zeta = mod_exp(Z, BitRev7(i--), Q);
+            int ntt_zeta = mod_exp(zeta, BitRev7(i--), Q);
             for (int j = start; j<start+len; j++){
                 int t=f[j];
                 f[j] = ((t+f[j+len])%Q +Q)%Q;
@@ -95,7 +95,7 @@ int* MultiplyNTTs(int* f_hat, int* g_hat, size_t size){
         binomial a, b;
         a.a, a.b = f_hat[2*i], f_hat[2*i + 1];
         b.a, b.b = g_hat[2*i], g_hat[2*i + 1];
-        int gamma= mod_exp(Z, 2*BitRev7(i)+1, Q);
+        int gamma= mod_exp(zeta, 2*BitRev7(i)+1, Q);
         binomial c = BaseCaseMultiply(a,b,gamma);
         h_hat[2*i], h_hat[2*i + 1] = c.a, c.b;
     }
