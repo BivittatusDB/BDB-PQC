@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "random.h"
+#include "constants.h"
 
 // NIST FIPS 203; Algoritm 3
 uint8_t* BitsToBytes(int* b, int l){
@@ -31,10 +32,38 @@ int* BytesToBits(uint8_t* B, int l){
 }
 
 // NIST FIPS 203; Algoritm 5
-uint8_t* ByteEncode(int* F, int d);
+uint8_t* ByteEncode(int* F, int d){
+    int* b = (int*)malloc(256*d*sizeof(int));
+    for (int i = 0; i<256; i++){
+        int a=F[i];
+        for (int j =0; j<d; j++){
+            b[i*d+j] = a%2;
+            a=(a-b[i*d+j])/2;
+        }
+    }
+    uint8_t *B = BitsToBytes(b,256);
+    return B;
+}
 
 // NIST FIPS 203; Algoritm 6
-int* ByteDecode(int* B, int d);
+int* ByteDecode(uint8_t* B, int d){
+    int m;
+    if (d=12){
+        m = Q;
+    } else {
+        m = (1 << d);
+    }
+    int *F = (int *)malloc(256*sizeof(int));
+    int* b= BytesToBits(B, 256);
+    int f=0;
+    for (int i = 0; i< 256; i++){
+        for (int j =0; j<d; j++){
+            f+=b[i*d+j]*(1<<j);
+        }
+        F[i]=f%m;
+    }
+    return F;
+}
 
 // Reversal of 7 bit binary representation of an integer r (NIST FIPS 203; Section 2.3)
 int BitRev7(int r) {
