@@ -3,6 +3,8 @@
 
 #include "constants.h"
 #include "random.h"
+#include "ntt.h"
+#include "sha3.h"
 
 // NIST Constants for KEM-512 (FIPS 203 Table 2)
 const int k  = 2;
@@ -20,7 +22,36 @@ typedef struct {
     int* privateKey;
 } KeyPair;
 
-KeyPair KeyGen(const int* d);
+KeyPair KeyGen(int* d){
+    d[33]=k;
+    int** split_digest = G(d);
+    int* rho = split_digest[0];
+    int* sigma = split_digest[1];
+    int n = 0;
+
+    int ***A = (int ***)malloc(k*sizeof(int**));
+    for (int i=0; i<k; i++){
+        A[i]=(int **)malloc(k*sizeof(int*));
+        for (int j=0; j<k;j++){
+            rho[33]=j;
+            rho[34]=i;
+            A[i][j]=SampleNTT(rho, 34);
+        }
+    }
+    int** s = (int **)malloc(k*sizeof(int*));
+    for (int i=0; i<k;i++){
+        int* digest=PRF(sigma, n, n1);
+        s[i]=SamplePolyCBD((uint8_t *)digest, n1, n);
+        n++;
+    }
+    int** e = (int **)malloc(k*sizeof(int*));
+    for (int i =0; i<k; i++){
+        int* digest = PRF(sigma, n, n1);
+        e[i]=SamplePolyCBD((uint8_t *)digest, n1, n);
+        n++;
+    }
+    
+}
 // NIST FIPS 203; Algorithm 14
 int* Encrypt(const int* ek, const int* m, const int* r);
 // NIST FIPS 203; Algorithm 15

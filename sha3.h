@@ -83,8 +83,27 @@ char *shake256(const unsigned char *input, size_t inlen,size_t outlen) {
 */
 
 #define H sha3_256
-#define G sha3_512
 #define J shake256
+
+int *PRF(int* s, int b, int eta){
+    s[33] = b;
+    int* digest = (int *)shake256((const unsigned char *)s, 33, 256*eta);
+    return digest;
+}
+
+//SPLIT SHA3-512 ouput (64 bytes into two 32-byte outputs)
+int** G(int* input){
+    int* digest = (int *)sha3_512((const unsigned char *)input, 33);
+
+    int** output = (int **)malloc(2*sizeof(int*));
+    output[0] = (int *)malloc(32);
+    output[1] = (int *)malloc(32);
+    for (int i=0; i<32; i++){
+        output[0][i]=digest[i];
+        output[1][i]=digest[i+32];
+    }
+    return output;
+}
 
 //SHAKE128 as an XOF 
 EVP_MD_CTX *XOF_init(){
