@@ -1,6 +1,9 @@
 #personal test files
 .vscode/
 misc*
+*.pem
+*example
+*.txt
 
 # Prerequisites
 *.d
