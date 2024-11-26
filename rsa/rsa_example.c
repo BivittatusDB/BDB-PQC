@@ -1,4 +1,4 @@
-//gcc -o rsa_example ssl3/rsa_example.c -lssl -lcrypto
+//gcc -o rsa_example rsa/rsa_example.c -lssl -lcrypto
 #include "rsa.h"
 #include <stdio.h>
 #include <string.h>
@@ -6,7 +6,7 @@
 
 int main() {
     // Generate RSA key pair
-    KEY keypair = gen_key(4096);
+    KEY keypair = gen_key();
 
     // Save keys to PEM files
     save_pubkey(keypair, "./");

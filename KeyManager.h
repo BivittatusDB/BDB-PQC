@@ -4,15 +4,13 @@
 #ifndef KEYMANAGER_H
 #define KEYMANAGER_H
 
+//#define BDB_USE_EXPERIMENTAL //uncomment to test under KEM instead of RSA
+
 #ifdef BDB_USE_EXPERIMENTAL
-    #include "liboqs/types.h"
+    #include "liboqs/liboqs.h"
 #else 
-    #include "ssl3/types.h"
+    #include "rsa/rsa.h"
 #endif
-
-
-#define PRIVKEYFILE "/private.pem"
-#define PUB_KEYFILE "/public.pem"
 
 typedef unsigned char key;
 
@@ -37,11 +35,29 @@ bool mkdb(char* db_name){
     return false;
 }
 
-int gen_keys();
-key* load_public_key();
-key* load_private_key();
-bool verify_keypair();
-int key_check();
+int gen_keys(PATH dir){
+    KEY keys = gen_key();
+    save_pubkey(keys, dir);
+    save_privkey(keys, dir);
+    return 0;
+}
+
+KEY load_public_key(PATH dir){
+    return load_pubkey(dir);
+}
+KEY load_private_key(PATH dir){
+    return load_privkey(dir);
+}
+
+int key_check(PATH dir){
+    FILE *privkeyfile = fopen(catpath(dir, PRIV_KEYFILE), "r");
+    FILE *pubkeyfile = fopen(catpath(dir, PUB_KEYFILE), "r");
+    if ((privkeyfile==NULL) && (pubkeyfile==NULL)){
+        gen_keys(dir);
+        key_check(dir);
+    }
+    return 0;
+}
 
 
 #endif // KEYMANAGER_H
