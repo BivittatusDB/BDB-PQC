@@ -1,3 +1,4 @@
+//gcc -o rsa_example ssl3/rsa_example.c -lssl -lcrypto
 #include "rsa.h"
 #include <stdio.h>
 #include <string.h>
@@ -5,7 +6,7 @@
 
 int main() {
     // Generate RSA key pair
-    EVP_PKEY *keypair = gen_key(4096);
+    KEY keypair = gen_key(4096);
 
     // Save keys to PEM files
     save_pubkey(keypair, "./");
@@ -13,12 +14,13 @@ int main() {
     EVP_PKEY_free(keypair);
 
     // Load keys from PEM files
-    EVP_PKEY *pub_key = load_pubkey("./");
-    EVP_PKEY *priv_key = load_privkey("./");
+    KEY pub_key = load_pubkey("./");
+    KEY priv_key = load_privkey("./");
 
     RSA_fencrypt(pub_key, "./test.txt");
-    sleep(10);
-    RSA_fdecrypt(priv_key, "./test.txt");
+    unsigned char *decrypted = RSA_fdecrypt(priv_key, "./test.txt");
+
+    printf("%02x, %d\n", decrypted, strlen(decrypted));  //may be wrong length due to null binary
 
     EVP_PKEY_free(pub_key);
     EVP_PKEY_free(priv_key);
