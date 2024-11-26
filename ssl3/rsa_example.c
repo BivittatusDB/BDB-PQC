@@ -20,7 +20,7 @@ int main() {
     RSA_fencrypt(pub_key, "./test.txt");
     unsigned char *decrypted = RSA_fdecrypt(priv_key, "./test.txt");
 
-    printf("%02x, %d\n", decrypted, strlen(decrypted));  //may be wrong length due to null binary
+    printf("%02x\n", decrypted);
 
     EVP_PKEY_free(pub_key);
     EVP_PKEY_free(priv_key);

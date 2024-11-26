@@ -13,7 +13,7 @@ int main(){
     oqs_fencrypt(pub_key, "./test.txt");
     unsigned char *decrypted = oqs_fdecrypt(priv_key, "./test.txt");
 
-    printf("%02x, %d\n", decrypted, strlen(decrypted-1)); //may be wrong length due to null binary
+    printf("%02x\n", decrypted);
 
     free(pub_key);
     free(priv_key);
