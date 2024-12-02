@@ -81,7 +81,7 @@ KEY load_privkey(PATH dir) {
     return key;
 }
 
-unsigned char *gen_shared_key(){
+KEY_t gen_shared_key(){
     unsigned char *buffer = malloc(SHARED_KEYSIZE);
     if (!buffer) return NULL;
     if (RAND_bytes(buffer, SHARED_KEYSIZE) != 1) return NULL;
@@ -89,14 +89,17 @@ unsigned char *gen_shared_key(){
     //return NULL;
 }
 
-unsigned char *rsa_encrypt(KEY pub_key, size_t *encrypted_len) {
+unsigned char *rsa_encrypt(KEY pub_key, size_t *encrypted_len, KEY_t *plain) {
     init_openssl();
     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pub_key, NULL);
     if (!ctx) handle_openssl_error();
 
     if (EVP_PKEY_encrypt_init(ctx) <= 0) handle_openssl_error();
     if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0) handle_openssl_error();
-    unsigned char *plaintext = gen_shared_key();
+    KEY_t plaintext = gen_shared_key();
+    if (plain != NULL) {
+        *plain = plaintext;
+    }
     // Determine buffer size for encrypted data
     if (EVP_PKEY_encrypt(ctx, NULL, encrypted_len, plaintext, SHARED_KEYSIZE) <= 0) handle_openssl_error();
 
@@ -142,16 +145,19 @@ unsigned char *rsa_decrypt(KEY priv_key, unsigned char *ciphertext, size_t ciphe
     return decrypted;
 }
 
+#ifdef __need_fsize
 size_t fsize(FILE *file){
     fseek(file, 0, SEEK_END);
     size_t size = ftell(file);
     rewind(file);
     return size;
 }
+#undef __need_fsize
+#endif
 
-int RSA_fencrypt(KEY pub_key, PATH filepath){
+int RSA_fencrypt(KEY pub_key, PATH filepath, KEY_t *shared){
     size_t enc_len;
-    unsigned char *encrypted = rsa_encrypt(pub_key, &enc_len);
+    unsigned char *encrypted = rsa_encrypt(pub_key, &enc_len, shared);
     FILE *outfile = fopen(filepath, "wb");
     if (!outfile) return 1;
     fwrite(encrypted, 1, enc_len, outfile);
@@ -159,7 +165,7 @@ int RSA_fencrypt(KEY pub_key, PATH filepath){
     return 0;
 }
 
-unsigned char *RSA_fdecrypt(KEY priv_key, PATH filepath){
+KEY_t RSA_fdecrypt(KEY priv_key, PATH filepath){
     FILE *infile = fopen(filepath, "rb");
     if (!infile) return NULL;
     size_t size = fsize(infile);
@@ -167,7 +173,7 @@ unsigned char *RSA_fdecrypt(KEY priv_key, PATH filepath){
     if (!ciphertext) return NULL;
     fread(ciphertext, 1, size, infile);
     fclose(infile);
-    unsigned char *decrypted = rsa_decrypt(priv_key, ciphertext, size);
+    KEY_t decrypted = rsa_decrypt(priv_key, ciphertext, size);
     return decrypted;
 }
 

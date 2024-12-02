@@ -9,12 +9,15 @@ PATH catpath(PATH path1, PATH path2){
     return full_path;
 }
 
+#ifdef __need_fsize
 size_t fsize(FILE *file){
     fseek(file, 0, SEEK_END);
     size_t size = ftell(file);
     rewind(file);
     return size;
 }
+#undef __need_fsize
+#endif
 
 KEY gen_key(){
     KEY_CTX kem = OQS_KEM_new(KEYSIZE);
@@ -126,13 +129,16 @@ KEY load_privkey(PATH dir){
     key->priv_key=priv_key;
     return key;
 }
-unsigned char *oqs_encrypt(KEY pub_key, size_t *encrypted_len){
+unsigned char *oqs_encrypt(KEY pub_key, size_t *encrypted_len, KEY_t *shared){
     //encapsulates a secret derived from the keys, which is used to create a symetric key
     KEY_CTX kem = pub_key->ctx;
     KEY_t shared_secret = malloc(kem->length_shared_secret);
     KEY_t ciphertext = malloc(kem->length_ciphertext);
     if (OQS_KEM_encaps(kem, ciphertext, shared_secret, pub_key->pub_key)!=0) return NULL;
     encrypted_len=&(kem->length_ciphertext);
+    if (shared!=NULL){
+        *shared=shared_secret;
+    }
     return ciphertext;
 }
 
@@ -144,9 +150,9 @@ unsigned char *oqs_decrypt(KEY priv_key, unsigned char *ciphertext, size_t *decr
     return shared_secret;
 }
 
-int oqs_fencrypt(KEY pub_key, PATH filepath){
+int oqs_fencrypt(KEY pub_key, PATH filepath, KEY_t *shared){
     size_t enc_len;
-    unsigned char *encrypted = oqs_encrypt(pub_key, &enc_len);
+    unsigned char *encrypted = oqs_encrypt(pub_key, &enc_len, shared);
     FILE *outfile = fopen(filepath, "wb");
     if (!outfile) return 1;
     fwrite(encrypted, 1, enc_len, outfile);

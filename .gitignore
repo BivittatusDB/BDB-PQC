@@ -2,8 +2,10 @@
 .vscode/
 misc*
 *.pem
+*.aes
 *example
 *.txt
+examples/*
 
 # Prerequisites
 *.d

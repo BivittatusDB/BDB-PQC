@@ -24,6 +24,7 @@ typedef struct {
 typedef KEY_STRUCT *KEY;
 
 #define KEYSIZE OQS_KEM_alg_kyber_1024
+#define SHARED_KEYSIZE (size_t)32 //32 byte key for AES 256 (matches with liboqs)
 #define PUB_KEYFILE (PATH)"pub.pem"
 #define PRIV_KEYFILE (PATH)"priv.pem"
 

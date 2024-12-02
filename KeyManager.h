@@ -4,16 +4,33 @@
 #ifndef KEYMANAGER_H
 #define KEYMANAGER_H
 
-//#define BDB_USE_EXPERIMENTAL //uncomment to test under KEM instead of RSA
+#define __need_fsize
 
+//#define BDB_USE_EXPERIMENTAL //uncomment to test under KEM instead of RSA
 #ifdef BDB_USE_EXPERIMENTAL
     #include "liboqs/liboqs.h"
+    #define bdb_encrypt oqs_fencrypt
+    #define bdb_decrypt oqs_fdecrypt
 #else 
     #include "rsa/rsa.h"
+    #define bdb_encrypt RSA_fencrypt
+    #define bdb_decrypt RSA_fdecrypt
 #endif
+
+#include "aes/aes.h"
+#include "types.h"
 
 typedef unsigned char key;
 
+bool mkdb(char* db_name){
+    if (mkdir(db_name, 0755)==0){
+        return true;
+    }
+    return false;
+}
+
+
+//TODO: edit this to not use sys/stat
 bool db_exists(char* db_name){
     struct stat st;
     //check if path exists
@@ -28,25 +45,25 @@ bool db_exists(char* db_name){
     return true;
 }
 
-bool mkdb(char* db_name){
-    if (mkdir(db_name, 0755)==0){
-        return true;
+bool sym_key_exists(PATH dir){
+    PATH filepath = catpath(dir, SYMKEY_FILE);
+    FILE *file =fopen(filepath, "r");
+    if (!file) {
+        fclose(file);
+        return false;
     }
-    return false;
+    fclose(file);
+    return true;
 }
 
 int gen_keys(PATH dir){
+    if (sym_key_exists(dir)){
+        remove(catpath(dir, SYMKEY_FILE));
+    }
     KEY keys = gen_key();
     save_pubkey(keys, dir);
     save_privkey(keys, dir);
     return 0;
-}
-
-KEY load_public_key(PATH dir){
-    return load_pubkey(dir);
-}
-KEY load_private_key(PATH dir){
-    return load_privkey(dir);
 }
 
 int key_check(PATH dir){

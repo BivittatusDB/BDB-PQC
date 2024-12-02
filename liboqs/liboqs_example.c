@@ -1,5 +1,7 @@
-//gcc -o liboqs_example liboqs/liboqs_example.c -loqs -lcrypto -lssl3
+//gcc -o examples/liboqs_example liboqs/liboqs_example.c -loqs -lcrypto -lssl3
 #include "liboqs.h"
+
+#define __need_fsize
 
 int main(){
     KEY key=gen_key();
@@ -10,7 +12,7 @@ int main(){
     KEY pub_key = load_pubkey("./");
     KEY priv_key = load_privkey("./");
 
-    oqs_fencrypt(pub_key, "./test.txt");
+    oqs_fencrypt(pub_key, "./test.txt", NULL);
     unsigned char *decrypted = oqs_fdecrypt(priv_key, "./test.txt");
 
     printf("%02x\n", decrypted);

@@ -93,20 +93,26 @@ unsigned char *aes_decrypt(ctxt ciphertxt, KEY_t key, int *plaintext_len) {
     int len;
     unsigned char *plaintext = malloc(ciphertxt->ciphertext_len);
 
-    if (!plaintext) return NULL;
+    if (!plaintext){
+        perror("Allocating Ciphertext");
+        return NULL;
+    }
 
     if (!(ctx = EVP_CIPHER_CTX_new())) {
+        perror("Making Context");
         free(plaintext);
         return NULL;
     }
 
     if (EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, key, ciphertxt->iv) != 1) {
+        perror("Initializing");
         EVP_CIPHER_CTX_free(ctx);
         free(plaintext);
         return NULL;
     }
 
     if (EVP_DecryptUpdate(ctx, plaintext, &len, ciphertxt->ciphertext, ciphertxt->ciphertext_len) != 1) {
+        perror("Updating");
         EVP_CIPHER_CTX_free(ctx);
         free(plaintext);
         return NULL;
@@ -114,12 +120,13 @@ unsigned char *aes_decrypt(ctxt ciphertxt, KEY_t key, int *plaintext_len) {
     *plaintext_len = len;
 
     if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, AES_TAGSIZE, ciphertxt->tag) != 1) {
+        perror("getting tag");
         EVP_CIPHER_CTX_free(ctx);
         free(plaintext);
         return NULL;
     }
-
-    if (EVP_DecryptFinal_ex(ctx, plaintext + len, &len) != 1) {
+    if (EVP_DecryptFinal_ex(ctx, plaintext + len, &len)!= 1) {
+        perror("finalizing");
         EVP_CIPHER_CTX_free(ctx);
         free(plaintext);
         return NULL;
@@ -130,12 +137,15 @@ unsigned char *aes_decrypt(ctxt ciphertxt, KEY_t key, int *plaintext_len) {
     return plaintext;
 }
 
+#ifdef __need_fsize
 size_t fsize(FILE *file) {
     fseek(file, 0, SEEK_END);
     size_t size = ftell(file);
     rewind(file);
     return size;
 }
+#undef __need_fize
+#endif
 
 int aes_fencrypt(KEY_t key, PATH filepath) {
     FILE *file_r = fopen(filepath, "rb");
@@ -175,12 +185,12 @@ int aes_fencrypt(KEY_t key, PATH filepath) {
 
 int aes_fdecrypt(KEY_t key, PATH filepath) {
     FILE *file_r = fopen(filepath, "rb");
-    if (!file_r) return -1;
+    if (!file_r) return 1;
 
     ctxt ciphertxt = malloc(sizeof(__ciphertext));
     if (!ciphertxt) {
         fclose(file_r);
-        return -1;
+        return 2;
     }
 
     fread(&ciphertxt->ciphertext_len, sizeof(ciphertxt->ciphertext_len), 1, file_r);
@@ -195,7 +205,7 @@ int aes_fdecrypt(KEY_t key, PATH filepath) {
         free(ciphertxt->ciphertext);
         free(ciphertxt->tag);
         free(ciphertxt);
-        return -1;
+        return 3;
     }
 
     fread(ciphertxt->iv, 1, AES_IVSIZE, file_r);
@@ -211,7 +221,7 @@ int aes_fdecrypt(KEY_t key, PATH filepath) {
         free(ciphertxt->ciphertext);
         free(ciphertxt->tag);
         free(ciphertxt);
-        return -1;
+        return 4;
     }
 
     FILE *file_w = fopen(filepath, "wb");
@@ -221,7 +231,7 @@ int aes_fdecrypt(KEY_t key, PATH filepath) {
         free(ciphertxt->ciphertext);
         free(ciphertxt->tag);
         free(ciphertxt);
-        return -1;
+        return 5;
     }
 
     fwrite(buffer, 1, plain_len, file_w);

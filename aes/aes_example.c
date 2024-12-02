@@ -1,6 +1,8 @@
-//gcc -o aes_example aes/aes_example.c -lcrypto -lssl3
+//gcc -o examples/aes_example aes/aes_example.c -lcrypto -lssl3
 
 #include "aes.h"
+
+#define __need_fsize
 
 int main(){
     KEY_t key;

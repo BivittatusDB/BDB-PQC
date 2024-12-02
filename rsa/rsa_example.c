@@ -1,8 +1,9 @@
-//gcc -o rsa_example rsa/rsa_example.c -lssl -lcrypto
+//gcc -o examples/rsa_example rsa/rsa_example.c -lssl -lcrypto
 #include "rsa.h"
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+
+#define __need_fsize
 
 int main() {
     // Generate RSA key pair
@@ -17,7 +18,7 @@ int main() {
     KEY pub_key = load_pubkey("./");
     KEY priv_key = load_privkey("./");
 
-    RSA_fencrypt(pub_key, "./test.txt");
+    RSA_fencrypt(pub_key, "./test.txt", NULL);
     unsigned char *decrypted = RSA_fdecrypt(priv_key, "./test.txt");
 
     printf("%02x\n", decrypted);

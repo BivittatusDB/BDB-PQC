@@ -11,6 +11,7 @@
 #include <string.h>
 
 typedef EVP_PKEY *KEY;
+typedef uint8_t *KEY_t;
 typedef char *PATH;
 
 #define RSA_KEYSIZE 4096
