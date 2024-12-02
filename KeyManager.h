@@ -1,10 +1,17 @@
 #include <stdbool.h>
-#include <sys/stat.h>
 
 #ifndef KEYMANAGER_H
 #define KEYMANAGER_H
 
 #define __need_fsize
+
+#ifdef _WIN32
+    #include <direct.h> // for mkdir on Windows
+    #include <windows.h> // for checking db on Windows
+#else
+    #include <sys/types.h> // for mkdir on Unix-like systems
+    #include <sys/stat.h> // for checking db on Unix
+#endif
 
 //#define BDB_USE_EXPERIMENTAL //uncomment to test under KEM instead of RSA
 #ifdef BDB_USE_EXPERIMENTAL
@@ -22,26 +29,34 @@
 
 typedef unsigned char key;
 
-bool mkdb(char* db_name){
-    if (mkdir(db_name, 0755)==0){
-        return true;
-    }
-    return false;
+bool makedir(PATH dir_name) {
+    #ifdef _WIN32
+        if (_mkdir(dir_name) != 0) return false;
+    #else
+        if (mkdir(dir_name, 0750) != 0) return false;
+    #endif
+    return true;
 }
 
+bool db_exists(PATH db_name){
+    #ifdef _WIN32
+        DWORD attributes = GetFileAttributes(db_name);
 
-//TODO: edit this to not use sys/stat
-bool db_exists(char* db_name){
-    struct stat st;
-    //check if path exists
-    if (stat(db_name, &st)!=0) {
-        //if not make the path (return false on fail)
-        return mkdb(db_name);
-    }
-    //check if path is a directory (return false if file)
-    if (!S_ISDIR(st.st_mode)) {
-        return false;
-    }
+        if (attributes == INVALID_FILE_ATTRIBUTES) {
+            return makedir(db_name);
+        }
+        if (!(attributes & FILE_ATTRIBUTE_DIRECTORY)) {
+            return false;
+        }   
+    #else
+        struct stat st;
+        if (stat(db_name, &st)!=0) {
+            return makedir(db_name);
+        }
+        if (!S_ISDIR(st.st_mode)) {
+            return false;
+        }
+    #endif
     return true;
 }
 
